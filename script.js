@@ -3,6 +3,8 @@ const hamburger = document.querySelector('.hamburger');
 const navMenu = document.querySelector('.nav-menu');
 
 hamburger.addEventListener('click', () => {
+    const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
+    hamburger.setAttribute('aria-expanded', !isExpanded);
     hamburger.classList.toggle('active');
     navMenu.classList.toggle('active');
 });
@@ -86,37 +88,137 @@ if (contactForm) {
         e.preventDefault();
         
         // Get form data
-        const formData = new FormData(contactForm);
-        const name = contactForm.querySelector('input[type="text"]').value;
-        const email = contactForm.querySelector('input[type="email"]').value;
-        const subject = contactForm.querySelectorAll('input[type="text"]')[1].value;
-        const message = contactForm.querySelector('textarea').value;
+        const nameInput = contactForm.querySelector('input[type="text"]');
+        const emailInput = contactForm.querySelector('input[type="email"]');
+        const subjectInput = contactForm.querySelectorAll('input[type="text"]')[1];
+        const messageInput = contactForm.querySelector('textarea');
         
-        // Simple validation
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const subject = subjectInput.value.trim();
+        const message = messageInput.value.trim();
+        
+        // Enhanced validation
         if (!name || !email || !subject || !message) {
-            alert('Please fill in all fields');
+            showNotification('Please fill in all fields', 'error');
             return;
         }
         
         // Email validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            alert('Please enter a valid email address');
+            showNotification('Please enter a valid email address', 'error');
             return;
         }
         
-        // Create mailto link
-        const mailtoLink = `mailto:shanthankompally12@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
+        // Show loading state
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Sending...';
+        submitBtn.disabled = true;
         
-        // Open email client
-        window.location.href = mailtoLink;
-        
-        // Show success message
-        alert('Thank you for your message! Your email client should open now.');
-        
-        // Reset form
-        contactForm.reset();
+        // Simulate form submission (you can replace this with actual form handling)
+        setTimeout(() => {
+            // Create mailto link
+            const mailtoLink = `mailto:shanthankompally12@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`)}`;
+            
+            // Open email client
+            window.location.href = mailtoLink;
+            
+            // Show success message
+            showNotification('Thank you for your message! Your email client should open now.', 'success');
+            
+            // Reset form
+            contactForm.reset();
+            
+            // Reset button
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }, 1000);
     });
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span>${message}</span>
+            <button class="notification-close">&times;</button>
+        </div>
+    `;
+    
+    // Add styles
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        max-width: 400px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Close button functionality
+    const closeBtn = notification.querySelector('.notification-close');
+    closeBtn.addEventListener('click', () => {
+        notification.remove();
+    });
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
 }
 
 // Typing animation for hero title
